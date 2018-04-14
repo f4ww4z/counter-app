@@ -1,0 +1,5 @@
+Counter list
+
+Button - Add new list to count
+
+when list item is clicked, count on

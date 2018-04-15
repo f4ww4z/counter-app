@@ -1,12 +1,16 @@
 package com.jagoancoding.countwithme
 
+import android.content.Context
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.support.v7.app.AlertDialog
 import android.support.v7.widget.LinearLayoutManager
 import android.support.v7.widget.RecyclerView
+import android.text.InputType
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
+import android.widget.EditText
 import android.widget.ProgressBar
 
 import com.google.firebase.database.DataSnapshot
@@ -17,6 +21,7 @@ import com.google.firebase.database.ValueEventListener
 
 class MainActivity : AppCompatActivity(), ItemStateListener {
 
+    // Recycler view and other views
     private lateinit var mainRV: RecyclerView
     private lateinit var mViewManager: RecyclerView.LayoutManager
     private lateinit var mAdapter: RecyclerView.Adapter<*>
@@ -27,6 +32,8 @@ class MainActivity : AppCompatActivity(), ItemStateListener {
     // Firebase
     private lateinit var mFirebase: FirebaseDatabase
     private lateinit var rootRef: DatabaseReference
+
+    private var counterName = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +54,6 @@ class MainActivity : AppCompatActivity(), ItemStateListener {
         }
 
         loadingBar = findViewById(R.id.pb_main)
-
         loadingBar.visibility = View.GONE
 
         // Show counters
@@ -69,26 +75,50 @@ class MainActivity : AppCompatActivity(), ItemStateListener {
     }
 
     override fun incrementCount(counter: Counter) {
+        loadingBar.visibility = View.VISIBLE
+
         val newCount = counter.count + 1
 
-        for(i in counterList.indices) {
+        for (i in counterList.indices) {
             if (counterList[i] == counter) {
                 counterList[i].count = newCount
 
                 rootRef.child(counter.title).setValue(newCount)
-
                 mAdapter.notifyItemChanged(i)
             }
         }
+        loadingBar.visibility = View.GONE
     }
 
     override fun onCounterAdd() {
-        val counter = Counter("counter${counterList.size + 1}", 0)
-        rootRef.child(counter.title).setValue(counter.count)
+        val input = EditText(this)
+        input.inputType = InputType.TYPE_CLASS_TEXT
 
-        counterList.add(counter)
+        // Create a dialog requiring string input
+        AlertDialog.Builder(this)
+                .setView(input)
+                .setMessage(R.string.input_mes)
+                .setTitle(R.string.input_title)
+                .setPositiveButton(R.string.ok) { dialog, which ->
+                    // Pass name
+                    counterName = input.text.toString().trim()
 
-        mAdapter.notifyItemChanged(counterList.size - 1)
+                    if (counterName.isEmpty()) {
+                        dialog.cancel()
+                    } else {
+                        loadingBar.visibility = View.VISIBLE
+
+                        val counter = Counter(counterName, 0)
+                        rootRef.child(counter.title).setValue(counter.count)
+
+                        counterList.add(counter)
+                        mAdapter.notifyItemChanged(counterList.size - 1)
+
+                        loadingBar.visibility = View.GONE
+                    }
+                }
+                .setNegativeButton(R.string.cancel, null)
+                .show()
     }
 
     override fun onItemDelete(itemId: String) {
@@ -103,7 +133,6 @@ class MainActivity : AppCompatActivity(), ItemStateListener {
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         return when (item?.itemId) {
             R.id.action_add -> {
-                //TODO: Show alert dialog
                 onCounterAdd()
                 true
             }
@@ -124,6 +153,5 @@ class MainActivity : AppCompatActivity(), ItemStateListener {
         }
         counterList.clear()
         mAdapter.notifyDataSetChanged()
-        onCounterAdd()
     }
 }

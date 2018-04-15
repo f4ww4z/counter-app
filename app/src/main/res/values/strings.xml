@@ -3,4 +3,9 @@
     
     <string name="add_counter">Add Counter</string>
     <string name="delete_all">Delete All</string>
+
+    <string name="ok">Done</string>
+    <string name="cancel">Cancel</string>
+    <string name="input_title">Counter name</string>
+    <string name="input_mes">What is the counter called?</string>
 </resources>
